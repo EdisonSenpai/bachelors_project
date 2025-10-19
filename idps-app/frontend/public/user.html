@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Status Dispozitiv</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" type="image/x-icon" href="../public/favicon.ico">
+</head>
+<body>
+  <div id="toastContainer"></div>
+  <div id="splashScreen">
+      <img src="../public/logo.png" alt="IDPS Logo" />
+  </div>
+  <div class="tabs">
+    <button class="tab-button active" onclick="showTab('statusTab')">🛡️ Status dispozitiv</button>
+    <button class="tab-button" onclick="showTab('historyTab')">📊 Istoric alerte</button>
+    <button class="tab-button" onclick="logout()">🚪 Logout</button>
+  </div>
+
+<div id="statusTab" class="tab-content active">
+  <h1>Statusul Dispozitivului</h1>
+  <p><strong>IP-ul dispozitivului:</strong> <span id="userIp">-</span></p>
+  <p><strong>Nume dispozitiv:</strong> <span id="userName">-</span></p>
+  <div class="status">Stare curenta: <span id="deviceStatus">🔄 Se incarca...</span></div>
+
+  <h2>Alerte recente</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>IP Sursa</th>
+        <th>IP Destinatie</th>
+        <th>Protocol</th>
+        <th>Semnatura</th>
+        <th>Eticheta AI</th>
+      </tr>
+    </thead>
+    <tbody id="userAlertsTable"></tbody>
+  </table>
+</div>
+
+<div id="historyTab" class="tab-content" style="display:none;">
+  <h2>Istoric complet al alertelor</h2>
+  <div id="daySelector" class="alert-day-selector"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Timestamp</th>
+        <th>IP Sursa</th>
+        <th>IP Destinatie</th>
+        <th>Protocol</th>
+        <th>Semnatura</th>
+        <th>Eticheta AI</th>
+      </tr>
+    </thead>
+    <tbody id="alertHistoryTable"></tbody>
+  </table>
+</div>
+
+<div id="xaiOverlay" class="xai-overlay" style="display:none;" onclick="closeXAI()"></div>
+<div id="xaiModal" class="xai-modal" style="display:none;">
+  <h3>🧠 Explicatie alerta</h3>
+  <p id="xaiExplanation">...</p>
+  <p><strong>Recomandare:</strong> <span id="xaiAdvice">...</span></p>
+  <button onclick="closeXAI()">Închide</button>
+</div>
+
+<script>
+  const signatureExplanations = {
+    "ET POLICY Windows Update P2P Activity": {
+      explanation: "Dispozitivul tău pare să trimită actualizări Windows către alte calculatoare.",
+      advice: "Poți dezactiva opțiunea în Settings → Delivery Optimization."
+    },
+    "Ping detected": {
+      explanation: "Alt dispozitiv din rețea a verificat dacă ești online (ping ICMP).",
+      advice: "Este în general inofensiv, dar poate fi parte dintr-un scan."
+    }
+    // + altele
+  };
+
+  const xaiLabels = {
+    "malicious": {
+      explanation: "Aceasta activitate este clasificata ca malitioasa pe baza semnaturii, comportamentului si altor factori relevanti.",
+      advice: "Verifica aplicatiile sau procesele care initiaza conexiuni suspecte. Ia in considerare izolarea acestui dispozitiv."
+    },
+    "normal": {
+      explanation: "Activitatea pare a fi legitima si in concordanta cu traficul normal.",
+      advice: "Nu sunt necesare actiuni in acest moment."
+    },
+    "information": {
+      explanation: "Aceasta alerta transmite doar informatii fara caracter ofensiv sau periculos.",
+      advice: "Poate fi ignorata, dar urmareste comportamentul in continuare."
+    }
+  };
+
+  function showXAI(label) {
+    const info = xaiLabels[label];
+    if (!info) return;
+
+    document.getElementById("xaiExplanation").innerText = info.explanation;
+    document.getElementById("xaiAdvice").innerText = info.advice;
+
+    document.getElementById("xaiModal").style.display = "block";
+    document.getElementById("xaiOverlay").style.display = "block";
+  }
+
+  function showXAIInline(label, rowElement) {
+    const info = xaiLabels[label];
+    if (!info) return;
+
+    document.querySelectorAll(".xai-inline").forEach(el => el.remove());
+
+    const tooltip = document.createElement("tr");
+    tooltip.className = "xai-inline";
+    tooltip.innerHTML = `
+      <td colspan="7" style="background: #222; color: white; padding: 10px;">
+        <strong>🧠 Explicatie AI:</strong> ${info.explanation}<br/>
+        <strong>✅ Recomandare:</strong> ${info.advice}
+      </td>
+    `;
+
+    rowElement.parentNode.insertBefore(tooltip, rowElement.nextSibling);
+  }
+
+  function closeXAI() {
+    document.getElementById("xaiModal").style.display = "none";
+    document.getElementById("xaiOverlay").style.display = "none";
+  }
+
+  function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById(tabId).style.display = 'block';
+    const index = tabId === 'statusTab' ? 0 : tabId === 'historyTab' ? 1 : -1;
+    if (index >= 0) document.querySelectorAll('.tab-button')[index].classList.add('active');
+
+    if (tabId === 'historyTab') fetchUserInfo().then(renderAlertHistory);
+  }
+
+  async function fetchUserInfo() {
+    const res = await fetch('/whoami');
+    const data = await res.json();
+    return data.ip;
+  }
+
+  async function fetchUserAlerts(userIP) {
+    const res = await fetch('http://10.222.8.24:5003/alerts');
+    const allAlerts = await res.json();
+    return allAlerts.filter(alert => alert.src_ip === userIP || alert.dest_ip === userIP);
+  }
+
+  async function fetchAlertHistory(userIP) {
+    const res = await fetch("http://10.222.8.24:5003/alert_history");
+    const all = await res.json();
+    return all.filter(alert => alert.src_ip === userIP || alert.dest_ip === userIP);
+  }
+
+  async function updateDashboard() {
+    const userIP = await fetchUserInfo();
+    document.getElementById('userIp').innerText = userIP;
+
+    const devicesRes = await fetch('http://10.222.8.23:5001/devices');
+    const allDevices = await devicesRes.json();
+    const userDevice = allDevices.find(dev => dev.ip === userIP);
+    document.getElementById('userName').innerText = userDevice?.name || 'Necunoscut';
+
+    const alerts = await fetchUserAlerts(userIP);
+    const statusSpan = document.getElementById('deviceStatus');
+    if (alerts.length === 0) {
+      statusSpan.innerText = "🟢 Protejata";
+      statusSpan.className = "active";
+    } else {
+      statusSpan.innerText = "🔴 In atac!";
+      statusSpan.className = "inactive";
+      showToast("⚠️ Activitate suspecta detectata!", "error");
+    }
+
+    const table = document.getElementById('userAlertsTable');
+    table.innerHTML = "";
+    alerts.slice(-10).reverse().forEach(alert => {
+      const row = document.createElement("tr");
+      const sig = alert.signature;
+      const xai = signatureExplanations[sig];
+
+      row.innerHTML = `
+        <td>${alert.timestamp}</td>
+        <td>${alert.src_ip}</td>
+        <td>${alert.dest_ip}</td>
+        <td>${alert.proto}</td>
+        <td>${alert.signature}</td>
+        <td>${alert.predicted_label || "n/a"} ${alert.predicted_label ? `<button onclick="showXAI('${alert.predicted_label}')">🧠</button>` : ""}</td>
+      `;
+      table.appendChild(row);
+    });
+  }
+
+  async function renderAlertHistory(userIP) {
+    const historyTable = document.getElementById("alertHistoryTable");
+    const container = historyTable.parentElement;
+
+    const alerts = await fetchAlertHistory(userIP);
+    const grouped = {};
+    alerts.forEach(alert => {
+      const dateKey = new Date(alert.timestamp).toLocaleDateString();
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(alert);
+    });
+
+    const selector = document.getElementById("daySelector");
+    selector.innerHTML = "";
+
+    const dates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+    let activeDate = dates[0];
+
+    const renderTable = (dateKey) => {
+      historyTable.innerHTML = "";
+      grouped[dateKey].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      .forEach(alert => {
+        const dateOnly = new Date(alert.timestamp).toLocaleDateString();
+        const row = document.createElement("tr");
+        const sig = alert.signature;
+        const xai = signatureExplanations[sig];
+
+        row.innerHTML = `
+          <td>${dateOnly}</td>
+          <td>${alert.timestamp}</td>
+          <td>${alert.src_ip}</td>
+          <td>${alert.dest_ip}</td>
+          <td>${alert.proto}</td>
+          <td>${alert.signature}</td>
+          <td>${alert.predicted_label || "n/a"} ${alert.predicted_label ? `<button onclick="showXAIInline('${alert.predicted_label}', this.parentNode.parentNode)">🧠</button>` : ""}</td>
+        `;
+        historyTable.appendChild(row);
+      });
+    };
+
+    dates.forEach(dateKey => {
+      const btn = document.createElement("button");
+      btn.textContent = dateKey === new Date().toLocaleDateString() ? "🔹 Azi" : `📅 ${dateKey}`;
+      if (dateKey === activeDate) btn.classList.add("active");
+
+      btn.onclick = () => {
+        activeDate = dateKey;
+        document.querySelectorAll(".alert-day-selector button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderTable(dateKey);
+      };
+
+      selector.appendChild(btn);
+    });
+
+    renderTable(activeDate);
+  }
+
+  function logout() {
+    window.location.href = "/logout";
+  }
+
+  function showToast(msg, type = "success") {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.classList.add(type === "error" ? "toast-error" : "toast-success");
+    toast.innerText = msg;
+    document.getElementById("toastContainer").appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+  }
+
+  window.addEventListener("load", () => {
+    const splash = document.getElementById("splashScreen");
+    splash.classList.add("hidden");
+    setTimeout(() => splash.remove(), 4000);
+  });
+
+  updateDashboard();
+  setInterval(updateDashboard, 10000);
+</script>
+</body>
+</html>

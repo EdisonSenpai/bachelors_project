@@ -1,0 +1,2 @@
+proto_encoded: 0.4552
+signature_encoded: 0.5448

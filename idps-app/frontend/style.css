@@ -1,0 +1,484 @@
+/* ====== GENERAL ====== */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+  margin: 0;
+  padding: 30px;
+}
+
+#splashScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0d0d0d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeOut 2s ease-out 3s forwards;
+}
+
+/* ====== SPLASH SCREEN ====== */
+#splashScreen img {
+  max-width: 300px;
+  animation: glowPulse 2s infinite ease-in-out;
+}
+
+@keyframes glowPulse {
+  0% {
+    filter: drop-shadow(0 0 5px #0ff) drop-shadow(0 0 10px #f0f);
+  }
+  50% {
+    filter: drop-shadow(0 0 15px #0ff) drop-shadow(0 0 30px #f0f);
+  }
+  100% {
+    filter: drop-shadow(0 0 5px #0ff) drop-shadow(0 0 10px #f0f);
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ====== CORNER LOGO ====== */
+#cornerLogo {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  z-index: 10;
+  opacity: 0.6;
+  animation: pulse 2s infinite;
+  pointer-events: none;
+}
+
+#cornerLogo svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
+}
+
+/* ====== TOAST NOTIFICATIONS ====== */
+#toastContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toast {
+  position: relative;
+  padding: 14px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
+  min-width: 240px;
+  animation: fadeIn 0.5s, fadeOut 0.5s ease 4.5s forwards;
+}
+
+.toast-success {
+  background-color: #198754;
+  color: white;
+}
+
+.toast-error {
+  background-color: #dc3545;
+  color: white;
+}
+
+@keyframes slideIn {
+  from {
+    right: -400px;
+    opacity: 0;
+  }
+  to {
+    right: 20px;
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+}
+
+
+/* ====== TITLU & STATUS ====== */
+h1 {
+  color: #00ccff;
+  margin-bottom: 10px;
+}
+
+.status {
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.status span {
+  background-color: #1c7430;
+  color: #d4edda;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+/* Badge activ (verde) animat */
+.status span.active {
+  background-color: #1c7430;
+  color: #d4edda;
+  animation: pulseBadge 1.5s infinite;
+}
+
+/* Badge inactiv (roșu) */
+.status span.inactive {
+  background-color: #721c24;
+  color: #f8d7da;
+  animation: none;
+}
+
+/* Tooltip implicit din browser */
+.status span[title] {
+  cursor: help;
+}
+/* Puls Animation */
+@keyframes pulseBadge {
+  0% {
+    box-shadow: 0 0 0 0 rgba(28, 116, 48, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(28, 116, 48, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(28, 116, 48, 0);
+  }
+}
+
+/* ====== INPUT SEARCH ====== */
+#searchInput {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  font-size: 14px;
+  width: 40%;
+  margin-top: 10px;
+}
+
+#searchInput::placeholder {
+  color: #999;
+}
+
+/* ====== BUTTONS ====== */
+button {
+  background-color: #111;
+  color: #00ccff;
+  border: 1px solid #00ccff;
+  font-weight: bold;
+  box-shadow: 0 0 8px #00ccff22;
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin-left: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+button:hover {
+  background-color: #00ccff;
+  color: #000;
+  box-shadow: 0 0 12px #00ccff88;
+  transform: scale(1.03);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* ====== TABLE ====== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+th {
+  background-color: #222;
+  color: #00ccff;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+td {
+  color: #ccc;
+  font-size: 14px;
+}
+
+tr:nth-child(even) {
+  background-color: #2a2a2a;
+}
+
+/* ====== TABS ====== */
+.tabs {
+  margin-bottom: 20px;
+}
+.tab-button {
+  background-color: #222;
+  color: #00ccff;
+  border: none;
+  padding: 10px 16px;
+  margin-right: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.tab-button.active {
+  background-color: #00ccff;
+  color: #000;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+  #searchInput {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  button {
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+
+  th, td {
+    padding: 10px;
+  }
+
+  th {
+    background-color: transparent;
+    color: #aaa;
+    font-weight: bold;
+    border-bottom: none;
+  }
+
+  td {
+    border-bottom: 1px solid #444;
+  }
+}
+
+/* ====== ALERTS ====== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+    background-color: #111;
+  }
+
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+  }
+
+  tr:nth-child(even) {
+    background-color: #1a1a1a;
+  }
+
+  tr:hover {
+    background-color: #222;
+  }
+
+  .alert-day-selector {
+    margin: 10px 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .alert-day-selector button {
+    background: #222;
+    color: cyan;
+    border: 1px solid #444;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .alert-day-selector button.active {
+    background: #00ffff22;
+  }
+
+  .alert-day-selector button:hover {
+    background: #00ffff11;
+  }
+
+#alertsChart {
+  max-height: 70vh;
+  width: 100%;
+  display: block;
+}
+
+
+/* ====== CANVAS ====== */
+
+#statsTab canvas {
+  max-width: 100%;
+  margin-top: 20px;
+}
+
+/* ====== SHAP TAB ====== */
+
+#shapTab textarea {
+  font-family: monospace;
+  padding: 8px;
+  border-radius: 10px;
+  resize: vertical;
+}
+
+#shapTab table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+#shapTab table th, #shapTab table td {
+  border: 1px solid #444;
+  padding: 6px 12px;
+  text-align: left;
+  color: white;
+}
+
+#shapTab h3 {
+  color: cyan;
+}
+
+/* ====== XAI TABLE ====== */
+
+.tabelXAI {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.tabelXAI th, .tabelXAI td {
+  padding: 8px;
+  border: 1px solid #444;
+  text-align: left;
+}
+
+.tabelXAI th {
+  background-color: #111;
+  color: #0ff;
+}
+
+/* ====== ADMIN FORM ====== */
+
+.adminForm {
+  background-color: #1e1e1e;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #444;
+  border-radius: 6px;
+}
+
+.adminForm input {
+  margin: 5px;
+  padding: 6px;
+  border: 1px solid #555;
+  background: #2a2a2a;
+  color: #eee;
+}
+
+.adminForm button {
+  padding: 6px 12px;
+  margin-left: 6px;
+  background: #0ff;
+  border: none;
+  cursor: pointer;
+}
+
+/* ====== USER CARDS ====== */
+
+.user-card {
+  background-color: #1b1b1b;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #444;
+  border-radius: 5px;
+}
+
+.user-card h3 {
+  margin-top: 0;
+  color: cyan;
+}
+
+.user-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.user-card li {
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-card button {
+  background-color: #a00;
+  color: white;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.user-card button:hover {
+  background-color: #d00;
+}

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>IDPS Dashboard</title>
+  <link rel="icon" type="image/x-icon" href="../public/favicon.ico">
+  <link rel="stylesheet" href="../style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="toastContainer"></div>
+  <div id="splashScreen">
+      <img src="../public/logo.png" alt="IDPS Logo" />
+  </div>
+  <div id="cornerLogo">
+    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke="#0ff" stroke-width="2">
+        <path d="M32 2 L62 16 V48 L32 62 L2 48 V16 Z" />
+        <circle cx="32" cy="32" r="10" stroke="#f0f" />
+        <line x1="26" y1="26" x2="22" y2="22" stroke="#f0f" />
+      </g>
+    </svg>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-button active" onclick="showTab('alertsTab')">📡 Alerte</button>
+    <button class="tab-button" onclick="showTab('blockedIPsTab')">⛔ Blacklist</button>
+    <button class="tab-button" onclick="showTab('devicesTab')">🖥️ Dispozitive</button>
+    <button class="tab-button" onclick="showTab('adminUsersTab')">👤 Administrare Utilizatori</button>
+    <button class="tab-button" onclick="showTab('userAttackTab')">🧑‍💻 Utilizatori & Atacuri</button>
+    <button class="tab-button" onclick="showTab('statsTab')">📈 Statistici</button>
+    <button class="tab-button" onclick="showTab('xaiTab')">🧠 SHAP XAI</button>
+    <button class="tab-button" onclick="showTab('encodersTab')">🧾 Encodari</button>
+    <button class="tab-button" onclick="logout()">🚪 Logout</button>
+  </div>
+
+<div id="alertsTab" class="tab-content active">
+  <h1>IDPS Dashboard</h1>
+  <div class="status">
+    Status: <span id="status" class="active" title="Conexiune stabilita cu Suricata">🟢 Activ</span>
+  </div>
+
+  <input type="text" id="searchInput" placeholder="Filtreaza dupa IP, protocol, semnatura..." oninput="filterAlerts()" />
+  <button onclick="clearFilter()" id="clearButton">❌ Clear Filter</button>
+  <button onclick="loadAlerts()" id="clearButton1">🔄 Refresh Alerte</button>
+  <button onclick="simulateBlock()">🧪 Simuleaza IP blocat</button>
+
+  <div style="margin-top: 10px;">
+    <label style="color: #aaa; font-size: 14px;">
+      <input type="checkbox" id="autoRefreshToggle" checked onchange="toggleAutoRefresh()" />
+      🔁 Auto-refresh
+    </label>
+
+    <button onclick="exportAlertsCSV()">📤 Export CSV</button>
+    <span id="alertsCount" style="margin-left: 20px; color: cyan; font-weight: bold;"></span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>IP Sursa</th>
+        <th>IP Destinatie</th>
+        <th>Protocol</th>
+        <th>Semnatura</th>
+      </tr>
+    </thead>
+    <tbody id="alertTable"></tbody>
+  </table>
+</div>
+
+<div id="blockedIPsTab" class="tab-content">
+  <h2>Adrese IP Blocate</h2>
+  <table>
+    <thead><tr><th>IP</th><th>Ora blocarii</th><th>Status</th></tr></thead>
+    <tbody id="blocked-ips-body"></tbody>
+  </table>
+</div>
+
+<div id="devicesTab" class="tab-content">
+  <h1>Dispozitive in Retea</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>IP</th>
+        <th>MAC</th>
+        <th>Nume</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="devicesTable"></tbody>
+  </table>
+</div>
+
+<div id="adminUsersTab" class="tab-content">
+  <button onclick="toggleUserManagementPanel()">⚙️ Formular Administrare</button>
+  <button onclick="toggleUserControlPanel()">🧑‍💻 Vizualizare Useri & IP-uri</button>
+  <div id="userManagementControls" style="display: none;">
+    <h3>👤 Administrare utilizatori</h3>
+
+    <div class="adminForm">
+      <h4>➕ Adaugare utilizator</h4>
+      <input id="newUsername" placeholder="Username">
+      <input id="newPassword" type="password" placeholder="Parola">
+      <button onclick="addNewUser()">Adauga</button>
+    </div>
+
+    <div class="adminForm">
+      <h4>🔗 Asociaza IP unui utilizator</h4>
+      <input id="assignUsername" placeholder="Username">
+      <input id="assignIP" placeholder="IP address">
+      <button onclick="assignIPToUser()">Asociaza</button>
+    </div>
+
+    <div class="adminForm">
+      <h4>🗑️ Sterge utilizator</h4>
+      <input id="deleteUsername" placeholder="Username">
+      <button onclick="deleteUser()">Sterge</button>
+    </div>
+
+    <div class="adminForm">
+      <h4>❌ Sterge IP asociat</h4>
+      <input id="unassignUsername" placeholder="Username">
+      <input id="unassignIP" placeholder="IP address">
+      <button onclick="unassignIP()">Sterge IP</button>
+    </div>
+  </div>
+
+  
+  <h2>👤 Administrare Utilizatori</h2>
+  <div id="userTabsContainer"></div>
+  <div id="userAlertsContainer"></div>
+  <div id="userViewControls" style="display: none;"></div>
+</div>
+
+<div id="userAttackTab" class="tab-content">
+  <h2>🧑‍💻 Alerte per Utilizator</h2>
+  <p style="color: #aaa;">Vezi ce alerte s-au declansat pe dispozitivele asociate fiecarui utilizator.</p>
+  <button onclick="loadUserAlerts()" style="margin-top: 10px;">🔄 Refresh Alerte Utilizatori</button>
+  <div id="userAttackContainer" style="margin-top: 20px;"></div>
+</div>
+
+<div id="statsTab" class="tab-content">
+  <h2>📊 Statistici Alerte</h2>
+ <div style="margin-bottom: 10px;">
+    <label for="daySelect" style="color:white;">Selecteaza ziua:</label>
+    <select id="daySelect" onchange="filterByDay()" style="padding: 5px; margin-left: 10px;">
+      <option value="all">Toate</option>
+    </select>
+  </div>
+  <canvas id="alertsChart" width="800" height="400"></canvas>
+  <canvas id="trendChart" width="800" height="300" style="margin-top: 30px;"></canvas>
+</div>
+
+<div id="xaiTab" class="tab-content">
+  <h2>🔍 SHAP Explicatii Avansate</h2>
+  <p>Introdu o alerta bruta (ca JSON) pentru a vedea impactul atributelor:</p>
+  <small style="color:#ccc;">Format asteptat: {"proto_encoded": int, "signature_encoded": int (pentru mai multe detalii, uita-te in tab-ul <b><i>Encodari</i></b>)}</small>
+  <textarea id="shapInput" rows="10" style="width:100%; background:#111; color:#0f0;">{"proto_encoded": 0, "signature_encoded": 0}</textarea>
+  <button onclick="sendToSHAP()">🔬 Explica</button>
+  <div id="shapOutput"></div>
+  <div id="shapChartContainer" style="margin-top: 20px;"></div>
+  <div id="decodedInfo" style="margin-top: 10px; color: #ccc;"></div>
+</div>
+
+<div id="encodersTab" class="tab-content">
+  <h2>Encodari cunoscute</h2>
+  <div id="encodersList"></div>
+</div>
+
+  <script src="../render.js"></script>
+  <script src="../main.js"></script>
+</body>
+</html>
